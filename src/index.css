@@ -1,0 +1,227 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 217 91% 60%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 217 91% 60%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 91% 60%;
+
+    /* Vairify brand colors - Royal Blue palette */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 188 91% 43%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    /* Accent - Dark Cyan */
+    --accent: 188 87% 38%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Success - Green */
+    --success: 158 77% 39%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Orange */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+
+    /* Vairify gradients - Royal Blue (darker top, lighter bottom) */
+    --gradient-primary: linear-gradient(135deg, hsl(224 64% 33%) 0%, hsl(188 87% 38%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(224 64% 33%) 0%, hsl(188 87% 38%) 50%, hsl(188 91% 43%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(224 64% 33% / 0.05) 0%, hsl(188 87% 38% / 0.05) 100%);
+
+    /* DateGuard specific colors */
+    --dateguard-purple: 265 70% 20%;
+    --dateguard-purple-light: 265 55% 35%;
+    --dateguard-gradient: linear-gradient(135deg, hsl(265 70% 20%) 0%, hsl(270 60% 30%) 100%);
+    --dateguard-active: 16 100% 60%;
+    --dateguard-emergency: 348 100% 60%;
+    --dateguard-guardian: linear-gradient(135deg, hsl(16 100% 60%) 0%, hsl(32 98% 55%) 100%);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 60% 5%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 60% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 60% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 224 76% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 212 60% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    /* Accent - Cyan (brighter in dark mode) */
+    --accent: 188 95% 50%;
+    --accent-foreground: 212 60% 10%;
+
+    /* Success - Green */
+    --success: 158 77% 45%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Orange */
+    --warning: 38 92% 55%;
+    --warning-foreground: 212 60% 10%;
+
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 188 95% 50%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(212 60% 15%) 0%, hsl(224 76% 40%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(212 60% 10%) 0%, hsl(224 76% 40%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(212 60% 10% / 0.1) 0%, hsl(188 95% 43% / 0.1) 100%);
+
+    /* DateGuard specific colors (dark mode) */
+    --dateguard-purple: 265 70% 25%;
+    --dateguard-purple-light: 265 55% 40%;
+    --dateguard-gradient: linear-gradient(135deg, hsl(265 70% 15%) 0%, hsl(270 60% 25%) 100%);
+    --dateguard-active: 16 100% 65%;
+    --dateguard-emergency: 348 100% 65%;
+    --dateguard-guardian: linear-gradient(135deg, hsl(16 100% 60%) 0%, hsl(32 98% 55%) 100%);
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-color: #ffffff !important;
+    color: hsl(var(--foreground));
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    background-color: #ffffff !important;
+  }
+
+  #root {
+    min-height: 100vh;
+    background-color: #ffffff !important;
+  }
+
+  /* Force light mode for now */
+  body.dark,
+  html.dark {
+    background-color: #ffffff !important;
+  }
+
+  /* Theme Classes - All gradients maintain darker top ratio */
+  .theme-ocean {
+    --primary: 212 60% 10%;
+    --secondary: 224 76% 40%;
+    --accent: 188 95% 43%;
+    --gradient-primary: linear-gradient(135deg, hsl(212 60% 10%) 0%, hsl(224 76% 40%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(204 52% 21%) 0%, hsl(172 70% 50%) 50%, hsl(188 91% 43%) 100%);
+  }
+
+  .theme-emerald {
+    --primary: 162 85% 16%;
+    --secondary: 160 84% 39%;
+    --accent: 158 64% 52%;
+    --gradient-primary: linear-gradient(135deg, hsl(162 85% 16%) 0%, hsl(160 84% 39%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(162 85% 16%) 0%, hsl(160 84% 39%) 50%, hsl(158 64% 52%) 100%);
+  }
+
+  .theme-midnight {
+    --primary: 243 48% 34%;
+    --secondary: 258 90% 66%;
+    --accent: 258 92% 76%;
+    --gradient-primary: linear-gradient(135deg, hsl(243 48% 34%) 0%, hsl(258 90% 66%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(243 48% 34%) 0%, hsl(258 90% 66%) 50%, hsl(258 92% 76%) 100%);
+  }
+
+  .theme-crimson {
+    --primary: 0 63% 30%;
+    --secondary: 0 84% 60%;
+    --accent: 0 90% 71%;
+    --gradient-primary: linear-gradient(135deg, hsl(0 63% 30%) 0%, hsl(0 84% 60%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 63% 30%) 0%, hsl(0 84% 60%) 50%, hsl(0 90% 71%) 100%);
+  }
+
+  .theme-sunset {
+    --primary: 15 73% 28%;
+    --secondary: 38 92% 50%;
+    --accent: 43 96% 56%;
+    --gradient-primary: linear-gradient(135deg, hsl(15 73% 28%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(15 73% 28%) 0%, hsl(38 92% 50%) 50%, hsl(43 96% 56%) 100%);
+  }
+
+  .theme-obsidian {
+    --primary: 20 10% 4%;
+    --secondary: 30 6% 25%;
+    --accent: 30 6% 47%;
+    --gradient-primary: linear-gradient(135deg, hsl(20 10% 4%) 0%, hsl(30 6% 25%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(20 10% 4%) 0%, hsl(30 6% 25%) 50%, hsl(30 6% 47%) 100%);
+  }
+
+  .theme-rose {
+    --primary: 343 78% 30%;
+    --secondary: 347 87% 61%;
+    --accent: 349 94% 72%;
+    --gradient-primary: linear-gradient(135deg, hsl(343 78% 30%) 0%, hsl(347 87% 61%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(343 78% 30%) 0%, hsl(347 87% 61%) 50%, hsl(349 94% 72%) 100%);
+  }
+
+  .theme-tangerine {
+    --primary: 15 73% 28%;
+    --secondary: 25 94% 53%;
+    --accent: 25 95% 64%;
+    --gradient-primary: linear-gradient(135deg, hsl(15 73% 28%) 0%, hsl(25 94% 53%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(15 73% 28%) 0%, hsl(25 94% 53%) 50%, hsl(25 95% 64%) 100%);
+  }
+}
