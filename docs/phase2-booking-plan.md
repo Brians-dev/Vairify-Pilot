@@ -74,3 +74,4 @@ Phase 2 delivers the full mutual-consent booking stack that ties provider avai
 
 Once Workstreams A–D land and QA signs off, Phase 2 can be released incrementally (e.g., soft launch Vairidate with early adopters while finalizing automations).
 
+

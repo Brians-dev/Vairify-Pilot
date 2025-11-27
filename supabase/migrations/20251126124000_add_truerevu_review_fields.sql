@@ -70,3 +70,4 @@ comment on column public.reviews.reviewee_vai_number is 'VAI number of the user 
 comment on column public.reviews.is_verified is 'True when review stems from VAI-CHECK encounter';
 comment on column public.reviews.mutual_completion_verified is 'True once both sides submit post-encounter reviews';
 
+

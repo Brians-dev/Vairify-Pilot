@@ -6,3 +6,4 @@ update public.referral_codes
 set commission_rate = 0.10
 where commission_rate = 0.05;
 
+

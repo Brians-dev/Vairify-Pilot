@@ -36,3 +36,4 @@ create policy "Anyone can view profile avatars"
   for select
   using (bucket_id = 'profile_avatars');
 
+
