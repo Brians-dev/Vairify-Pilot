@@ -10,6 +10,11 @@ if (typeof window !== 'undefined') {
   localStorage.setItem('vairify-theme', 'ocean');
 }
 
+console.log("[Vairify] Supabase env configured:", {
+  VITE_SUPABASE_URL: !!import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_PUBLISHABLE_KEY: !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+});
+
 try {
   const rootElement = document.getElementById("root");
   if (!rootElement) {

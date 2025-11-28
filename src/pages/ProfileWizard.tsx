@@ -312,6 +312,14 @@ export default function ProfileWizard() {
     return 5; // Language, Personal Info, Appearance, Services, Pricing
   };
 
+  // Get step numbers for display based on role
+  const getStepNumbers = (): number[] => {
+    if (userRole === 'client') {
+      return [1, 2, 3];
+    }
+    return [1, 2, 3, 4, 5];
+  };
+
   const TOTAL_STEPS = getTotalSteps();
 
   const nextStep = async () => {
@@ -494,22 +502,6 @@ export default function ProfileWizard() {
     }
   };
 
-  // Get total steps based on role
-  const getTotalSteps = (): number => {
-    if (userRole === 'client') {
-      return 3; // Language, Personal Info, Settings
-    }
-    return 5; // Language, Personal Info, Appearance, Services, Pricing
-  };
-
-  // Get step numbers for display based on role
-  const getStepNumbers = (): number[] => {
-    if (userRole === 'client') {
-      return [1, 2, 3];
-    }
-    return [1, 2, 3, 4, 5];
-  };
-
   if (loading || roleLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-background/95 flex items-center justify-center">
@@ -537,7 +529,6 @@ export default function ProfileWizard() {
     );
   }
 
-  const TOTAL_STEPS = getTotalSteps();
   const progress = (currentStep / TOTAL_STEPS) * 100;
   const stepNumbers = getStepNumbers();
 

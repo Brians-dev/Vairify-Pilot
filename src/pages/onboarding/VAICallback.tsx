@@ -80,9 +80,6 @@ const VAICallback = () => {
             setMessage('Authentication failed. Please try again.');
             return;
           }
-
-          // Get the authenticated user (should exist after OTP verification)
-          const { data: { user: authUser } } = await supabase.auth.getUser();
           
           // Check if user has existing VAI that's fully qualified
           if (sessionData.has_existing_vai && sessionData.vai_status === 'fully_qualified' && sessionData.existing_vai_number && authUser) {
@@ -116,7 +113,7 @@ const VAICallback = () => {
 
               // Link referral VAI and coupon code if provided
               if (sessionData.referral_vai || sessionData.coupon_code) {
-                // Handle referral linking logic here
+                console.log('Referral linking placeholder:', {
                   referral_vai: sessionData.referral_vai,
                   coupon_code: sessionData.coupon_code
                 });
@@ -143,8 +140,7 @@ const VAICallback = () => {
 
           // Link referral VAI and coupon code if provided
           if (sessionData.referral_vai || sessionData.coupon_code) {
-            // Handle referral linking logic here
-            // This would typically create referral records
+            console.log('Referral linking placeholder:', {
               referral_vai: sessionData.referral_vai,
               coupon_code: sessionData.coupon_code
             });
