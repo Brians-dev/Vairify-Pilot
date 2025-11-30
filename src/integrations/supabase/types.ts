@@ -336,173 +336,6 @@ export type Database = {
         }
         Relationships: []
       }
-      calendar_blackouts: {
-        Row: {
-          created_at: string
-          end_time: string
-          id: string
-          metadata: Json | null
-          provider_id: string
-          reason: string | null
-          start_time: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          end_time: string
-          id?: string
-          metadata?: Json | null
-          provider_id: string
-          reason?: string | null
-          start_time: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          end_time?: string
-          id?: string
-          metadata?: Json | null
-          provider_id?: string
-          reason?: string | null
-          start_time?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calendar_blackouts_provider_id_fkey"
-            columns: ["provider_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      calendar_events: {
-        Row: {
-          appointment_type: string | null
-          client_id: string | null
-          created_at: string
-          encounter_id: string | null
-          end_time: string
-          id: string
-          location: string | null
-          metadata: Json | null
-          notes: string | null
-          provider_id: string
-          source: Database["public"]["Enums"]["calendar_event_source"]
-          start_time: string
-          status: Database["public"]["Enums"]["calendar_event_status"]
-          title: string | null
-          updated_at: string
-        }
-        Insert: {
-          appointment_type?: string | null
-          client_id?: string | null
-          created_at?: string
-          encounter_id?: string | null
-          end_time: string
-          id?: string
-          location?: string | null
-          metadata?: Json | null
-          notes?: string | null
-          provider_id: string
-          source?: Database["public"]["Enums"]["calendar_event_source"]
-          start_time: string
-          status?: Database["public"]["Enums"]["calendar_event_status"]
-          title?: string | null
-          updated_at?: string
-        }
-        Update: {
-          appointment_type?: string | null
-          client_id?: string | null
-          created_at?: string
-          encounter_id?: string | null
-          end_time?: string
-          id?: string
-          location?: string | null
-          metadata?: Json | null
-          notes?: string | null
-          provider_id?: string
-          source?: Database["public"]["Enums"]["calendar_event_source"]
-          start_time?: string
-          status?: Database["public"]["Enums"]["calendar_event_status"]
-          title?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calendar_events_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "calendar_events_encounter_id_fkey"
-            columns: ["encounter_id"]
-            isOneToOne: false
-            referencedRelation: "encounters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "calendar_events_provider_id_fkey"
-            columns: ["provider_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      calendar_rules: {
-        Row: {
-          buffer_after_minutes: number
-          buffer_before_minutes: number
-          created_at: string
-          day_of_week: number
-          id: string
-          is_active: boolean
-          metadata: Json | null
-          provider_id: string
-          start_time: string
-          end_time: string
-          updated_at: string
-        }
-        Insert: {
-          buffer_after_minutes?: number
-          buffer_before_minutes?: number
-          created_at?: string
-          day_of_week: number
-          id?: string
-          is_active?: boolean
-          metadata?: Json | null
-          provider_id: string
-          start_time: string
-          end_time: string
-          updated_at?: string
-        }
-        Update: {
-          buffer_after_minutes?: number
-          buffer_before_minutes?: number
-          created_at?: string
-          day_of_week?: number
-          id?: string
-          is_active?: boolean
-          metadata?: Json | null
-          provider_id?: string
-          start_time?: string
-          end_time?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calendar_rules_provider_id_fkey"
-            columns: ["provider_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       calendar_settings: {
         Row: {
           advance_notice_hours: number
@@ -1672,12 +1505,16 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          location: string | null
+          login_preference: string
           profile_links: Json | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string | null
           subscription_tier: string | null
           updated_at: string
+          user_type: string
+          vai_number: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1686,12 +1523,16 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          location?: string | null
+          login_preference?: string
           profile_links?: Json | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
           updated_at?: string
+          user_type?: string
+          vai_number?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1700,12 +1541,16 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          location?: string | null
+          login_preference?: string
           profile_links?: Json | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
           updated_at?: string
+          user_type?: string
+          vai_number?: string | null
         }
         Relationships: []
       }
@@ -2045,8 +1890,6 @@ export type Database = {
           created_at: string
           encounter_id: string
           id: string
-          is_verified: boolean
-          mutual_completion_verified: boolean
           notes: string | null
           overall_rating: number | null
           published: boolean | null
@@ -2054,9 +1897,7 @@ export type Database = {
           punctuality_rating: number | null
           respectfulness_rating: number | null
           reviewed_user_id: string
-          reviewee_vai_number: string | null
           reviewer_id: string
-          reviewer_vai_number: string | null
           safety_rating: number | null
           submitted: boolean | null
           submitted_at: string | null
@@ -2069,8 +1910,6 @@ export type Database = {
           created_at?: string
           encounter_id: string
           id?: string
-          is_verified?: boolean
-          mutual_completion_verified?: boolean
           notes?: string | null
           overall_rating?: number | null
           published?: boolean | null
@@ -2078,9 +1917,7 @@ export type Database = {
           punctuality_rating?: number | null
           respectfulness_rating?: number | null
           reviewed_user_id: string
-          reviewee_vai_number?: string | null
           reviewer_id: string
-          reviewer_vai_number?: string | null
           safety_rating?: number | null
           submitted?: boolean | null
           submitted_at?: string | null
@@ -2093,8 +1930,6 @@ export type Database = {
           created_at?: string
           encounter_id?: string
           id?: string
-          is_verified?: boolean
-          mutual_completion_verified?: boolean
           notes?: string | null
           overall_rating?: number | null
           published?: boolean | null
@@ -2102,9 +1937,7 @@ export type Database = {
           punctuality_rating?: number | null
           respectfulness_rating?: number | null
           reviewed_user_id?: string
-          reviewee_vai_number?: string | null
           reviewer_id?: string
-          reviewer_vai_number?: string | null
           safety_rating?: number | null
           submitted?: boolean | null
           submitted_at?: string | null
@@ -2454,17 +2287,7 @@ export type Database = {
           final_verification_client: boolean | null
           final_verification_provider: boolean | null
           id: string
-          liability_waiver_accepted: boolean | null
-          manual_review_decided_at: string | null
-          manual_review_decision: Database["public"]["Enums"]["manual_review_decision_type"] | null
-          manual_review_live_selfie_url: string | null
-          manual_review_notes: string | null
-          manual_review_reason: Database["public"]["Enums"]["manual_review_reason_type"] | null
-          manual_review_sent_at: string | null
-          manual_review_vai_photo_url: string | null
-          manual_reviewer_vai_number: string | null
           metadata: Json | null
-          owner_consent_timestamp: string | null
           provider_decision: string | null
           provider_face_url: string | null
           provider_face_verified: boolean | null
@@ -2477,8 +2300,6 @@ export type Database = {
           qr_expires_at: string | null
           session_code: string
           status: string | null
-          verification_method: Database["public"]["Enums"]["verification_method_type"] | null
-          reviewer_consent_timestamp: string | null
         }
         Insert: {
           client_decision?: string | null
@@ -2498,17 +2319,7 @@ export type Database = {
           final_verification_client?: boolean | null
           final_verification_provider?: boolean | null
           id?: string
-          liability_waiver_accepted?: boolean | null
-          manual_review_decided_at?: string | null
-          manual_review_decision?: Database["public"]["Enums"]["manual_review_decision_type"] | null
-          manual_review_live_selfie_url?: string | null
-          manual_review_notes?: string | null
-          manual_review_reason?: Database["public"]["Enums"]["manual_review_reason_type"] | null
-          manual_review_sent_at?: string | null
-          manual_review_vai_photo_url?: string | null
-          manual_reviewer_vai_number?: string | null
           metadata?: Json | null
-          owner_consent_timestamp?: string | null
           provider_decision?: string | null
           provider_face_url?: string | null
           provider_face_verified?: boolean | null
@@ -2521,8 +2332,6 @@ export type Database = {
           qr_expires_at?: string | null
           session_code: string
           status?: string | null
-          verification_method?: Database["public"]["Enums"]["verification_method_type"] | null
-          reviewer_consent_timestamp?: string | null
         }
         Update: {
           client_decision?: string | null
@@ -2542,17 +2351,7 @@ export type Database = {
           final_verification_client?: boolean | null
           final_verification_provider?: boolean | null
           id?: string
-          liability_waiver_accepted?: boolean | null
-          manual_review_decided_at?: string | null
-          manual_review_decision?: Database["public"]["Enums"]["manual_review_decision_type"] | null
-          manual_review_live_selfie_url?: string | null
-          manual_review_notes?: string | null
-          manual_review_reason?: Database["public"]["Enums"]["manual_review_reason_type"] | null
-          manual_review_sent_at?: string | null
-          manual_review_vai_photo_url?: string | null
-          manual_reviewer_vai_number?: string | null
           metadata?: Json | null
-          owner_consent_timestamp?: string | null
           provider_decision?: string | null
           provider_face_url?: string | null
           provider_face_verified?: boolean | null
@@ -2565,59 +2364,8 @@ export type Database = {
           qr_expires_at?: string | null
           session_code?: string
           status?: string | null
-          verification_method?: Database["public"]["Enums"]["verification_method_type"] | null
-          reviewer_consent_timestamp?: string | null
         }
         Relationships: []
-      }
-      manual_verification_audit_log: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          ip_address: string | null
-          metadata: Json | null
-          session_id: string
-          user_agent: string | null
-          user_id: string
-          user_vai_number: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          session_id: string
-          user_agent?: string | null
-          user_id: string
-          user_vai_number?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          session_id?: string
-          user_agent?: string | null
-          user_id?: string
-          user_vai_number?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "manual_verification_audit_log_session_id_fkey"
-            columns: ["session_id"]
-            referencedRelation: "vai_check_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "manual_verification_audit_log_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       vai_identity_access_logs: {
         Row: {
@@ -2756,13 +2504,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      can_submit_review: {
-        Args: {
-          p_encounter_id: string
-          p_reviewer_id: string
-        }
-        Returns: boolean
-      }
       generate_business_vai_number: { Args: never; Returns: string }
       generate_session_code: { Args: never; Returns: string }
       generate_vai_coupon_code: { Args: never; Returns: string }
@@ -2776,17 +2517,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "influencer" | "affiliate"
-      calendar_event_source: "manual" | "vairidate" | "available_now" | "dateguard"
-      calendar_event_status: "hold" | "pending" | "confirmed" | "cancelled" | "completed"
       business_type: "service" | "non_service"
       referral_tier:
         | "founding_council"
         | "first_movers"
         | "standard"
         | "early_access"
-      manual_review_decision_type: "approved" | "rejected" | "pending"
-      manual_review_reason_type: "system_failure" | "individual_issue" | "failed_verification"
-      verification_method_type: "automated" | "manual_fallback"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2915,8 +2651,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "influencer", "affiliate"],
-      calendar_event_source: ["manual", "vairidate", "available_now", "dateguard"],
-      calendar_event_status: ["hold", "pending", "confirmed", "cancelled", "completed"],
       business_type: ["service", "non_service"],
       referral_tier: [
         "founding_council",
@@ -2924,9 +2658,6 @@ export const Constants = {
         "standard",
         "early_access",
       ],
-      manual_review_decision_type: ["approved", "rejected", "pending"],
-      manual_review_reason_type: ["system_failure", "individual_issue", "failed_verification"],
-      verification_method_type: ["automated", "manual_fallback"],
     },
   },
 } as const

@@ -62,19 +62,6 @@ serve(async (req) => {
       throw new Error('No guardians found in selected groups');
     }
 
-    let locationPhotoUrl = session.location_photo_url || '';
-    if (locationPhotoUrl && !locationPhotoUrl.startsWith('http')) {
-      try {
-        const { data: signedPhoto } = await supabase.storage
-          .from('dateguard-pre-activation')
-          .createSignedUrl(locationPhotoUrl, 60 * 15);
-        locationPhotoUrl = signedPhoto?.signedUrl || '';
-      } catch (signedError) {
-        console.warn('Unable to generate signed URL for location photo:', signedError);
-        locationPhotoUrl = '';
-      }
-    }
-
     // Format meeting time
     const meetingStart = new Date(session.started_at);
     const meetingEnd = new Date(session.scheduled_end_at || session.ends_at);
@@ -141,7 +128,7 @@ ${googleMapsLink}
 
 🏨 PRE-MEETING INTEL:
 ${session.pre_activation_notes ? `Note: "${session.pre_activation_notes}"` : 'No notes provided'}
-${locationPhotoUrl ? `Photo: ${locationPhotoUrl}` : ''}
+${session.location_photo_url ? `Photo: ${session.location_photo_url}` : ''}
 
 ${policeInfo}
 

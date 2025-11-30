@@ -14,14 +14,6 @@ const VerifyOTP = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [otpMethod, setOtpMethod] = useState<'email' | 'phone'>('email');
-
-  const maskPhoneNumber = (value: string) => {
-    if (!value) return '';
-    const visibleDigits = value.slice(-2);
-    return `${value.slice(0, 3)}••••${visibleDigits}`;
-  };
 
   useEffect(() => {
     // Get session data
@@ -41,15 +33,6 @@ const VerifyOTP = () => {
       }
     }
 
-    const storedMethod = sessionStorage.getItem('otp_method') as 'email' | 'phone' | null;
-    if (storedMethod === 'phone' || storedMethod === 'email') {
-      setOtpMethod(storedMethod);
-    }
-
-    const storedPhone = sessionStorage.getItem('otp_phone');
-    if (storedPhone) {
-      setPhone(storedPhone);
-    }
   }, []);
 
   const handleOtpChange = (index: number, value: string) => {
@@ -147,17 +130,12 @@ const VerifyOTP = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-verification-otp', {
-        body: { 
-          email: email, 
-          resend: true,
-          method: otpMethod,
-          phone: otpMethod === 'phone' ? phone : undefined
-        }
+        body: { email: email, resend: true }
       });
 
       if (error) throw error;
 
-      toast.success(`Verification code resent via ${otpMethod === 'phone' ? 'SMS' : 'email'}.`);
+      toast.success("Verification code resent! Please check your email.");
       setOtp(['', '', '', '', '', '']);
       document.getElementById('otp-0')?.focus();
     } catch (error: any) {
@@ -188,13 +166,10 @@ const VerifyOTP = () => {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md animate-fade-in">
           <h1 className="text-4xl font-bold text-white text-center mb-4">
-            Verify Your Account
+            Verify Your Email
           </h1>
           <p className="text-white/80 text-center mb-8">
-            We sent a 6-digit code via {otpMethod === 'phone' ? 'SMS' : 'email'} to{" "}
-            <strong>
-              {otpMethod === 'phone' && phone ? maskPhoneNumber(phone) : (email || 'your email')}
-            </strong>
+            We sent a 6-digit code to <strong>{email || 'your email'}</strong>
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6 bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
@@ -228,7 +203,7 @@ const VerifyOTP = () => {
                   Verifying...
                 </>
               ) : (
-                "Verify & Continue"
+                "Verify Email"
               )}
             </Button>
 

@@ -71,3 +71,8 @@ comment on column public.reviews.is_verified is 'True when review stems from VAI
 comment on column public.reviews.mutual_completion_verified is 'True once both sides submit post-encounter reviews';
 
 
+
+
+
+
+

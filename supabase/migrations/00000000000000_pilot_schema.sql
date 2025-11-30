@@ -11,8 +11,31 @@ CREATE TABLE public.profiles (
     bio text,
     avatar_url text,
     tier text NOT NULL DEFAULT 'free',
+    login_preference text NOT NULL DEFAULT 'email' CHECK (login_preference IN ('facial', 'email', 'password', 'phone_otp')),
     created_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE TABLE public.signup_sessions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+    email text NOT NULL,
+    phone text,
+    password_hash text,
+    referral_vai text,
+    coupon_code text,
+    has_existing_vai boolean NOT NULL DEFAULT false,
+    existing_vai_number text,
+    chainpass_response jsonb,
+    vai_status text CHECK (vai_status IN ('fully_qualified', 'missing_requirements', 'invalid', 'pending_check')),
+    payment_expiration timestamptz,
+    requirements_status jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz NOT NULL DEFAULT (now() + interval '30 minutes')
+);
+
+CREATE INDEX idx_signup_sessions_session_id ON public.signup_sessions(session_id);
+CREATE INDEX idx_signup_sessions_expires_at ON public.signup_sessions(expires_at);
+CREATE INDEX idx_signup_sessions_existing_vai ON public.signup_sessions(existing_vai_number) WHERE existing_vai_number IS NOT NULL;
 
 CREATE TABLE public.guardians (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,6 +137,7 @@ CREATE TABLE public.feature_flags (
 -- ==============================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.signup_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guardians ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guardian_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guardian_group_members ENABLE ROW LEVEL SECURITY;
@@ -129,6 +153,22 @@ ALTER TABLE public.feature_flags ENABLE ROW LEVEL SECURITY;
 -- Profiles
 CREATE POLICY "Profiles owner read" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Profiles owner manage" ON public.profiles FOR ALL USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+-- Signup Sessions
+CREATE POLICY "Signup sessions anon access" ON public.signup_sessions
+    FOR ALL
+    USING (auth.role() = 'anon')
+    WITH CHECK (auth.role() = 'anon');
+
+CREATE POLICY "Signup sessions authenticated access" ON public.signup_sessions
+    FOR ALL
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Signup sessions service access" ON public.signup_sessions
+    FOR ALL
+    USING (auth.role() = 'service_role')
+    WITH CHECK (auth.role() = 'service_role');
 
 -- Guardians & Groups
 CREATE POLICY "Guardians owner read" ON public.guardians FOR SELECT USING (auth.uid() = user_id);

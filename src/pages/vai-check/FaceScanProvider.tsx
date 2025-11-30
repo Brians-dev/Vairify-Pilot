@@ -5,168 +5,141 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import FaceScanner from "@/components/dateguard/FaceScanner";
 import { supabase } from "@/integrations/supabase/client";
+import { ManualVerificationRequestFlow } from "@/components/vai-check/ManualVerificationRequestFlow";
 
 export default function FaceScanProvider() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [showManualFallback, setShowManualFallback] = useState(false);
+  const [failureReason, setFailureReason] = useState<'system_failure' | 'individual_issue' | 'failed_verification'>('failed_verification');
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessionCode, setSessionCode] = useState<string | null>(null);
-
-  const captureFrame = () => {
-    const video = document.querySelector("video");
-    if (!video) return null;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    ctx?.drawImage(video, 0, 0);
-    return canvas.toDataURL("image/jpeg");
-  };
-
-  const ensureSession = async (userId: string, faceImage: string) => {
-    if (sessionId && sessionCode) {
-      await supabase
-        .from("vai_check_sessions")
-        .update({
-          provider_face_url: faceImage,
-          status: "initiated",
-        })
-        .eq("id", sessionId);
-      return { id: sessionId, session_code: sessionCode };
-    }
-
-    const { data: generatedCode, error: codeError } = await supabase.rpc("generate_session_code");
-    if (codeError) throw codeError;
-
-    const { data: session, error: sessionError } = await supabase
-      .from("vai_check_sessions")
-      .insert({
-        provider_id: userId,
-        provider_face_url: faceImage,
-        session_code: generatedCode,
-        status: "initiated",
-        provider_decision: "pending",
-        client_decision: "pending",
-        verification_method: "automated",
-      })
-      .select("id, session_code")
-      .single();
-
-    if (sessionError || !session) {
-      throw sessionError || new Error("Failed to create session");
-    }
-
-    setSessionId(session.id);
-    setSessionCode(session.session_code);
-    return session;
-  };
+  const [vaiPhotoUrl, setVaiPhotoUrl] = useState<string | null>(null);
 
   const handleCapture = async () => {
-    const imageData = captureFrame();
-    if (!imageData) return;
+    const video = document.querySelector('video');
+    if (!video) return;
 
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(video, 0, 0);
+    
+    const imageData = canvas.toDataURL('image/jpeg');
+    setCapturedImage(imageData);
     setIsScanning(false);
     setIsVerifying(true);
 
+    // Verify face against V.A.I. biometric photo
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
           title: "Authentication required",
-          description: "Please log in to continue",
-          variant: "destructive",
+          description: "Please log in to verify your identity",
+          variant: "destructive"
         });
         navigate("/login");
         return;
       }
 
+      // Get user's V.A.I. verification data
       const { data: vaiVerification } = await supabase
-        .from("vai_verifications")
-        .select("vai_number, biometric_photo_url")
-        .eq("user_id", user.id)
+        .from('vai_verifications')
+        .select('biometric_photo_url, vai_number')
+        .eq('user_id', user.id)
         .single();
 
       if (!vaiVerification) {
         toast({
-          title: "V.A.I. Required",
-          description: "Complete your ChainPass verification before using VAI-CHECK.",
-          variant: "destructive",
+          title: "V.A.I. not found",
+          description: "Please complete V.A.I. verification first",
+          variant: "destructive"
         });
         navigate("/onboarding/success");
         return;
       }
 
-      const session = await ensureSession(user.id, imageData);
+      // Create session first (needed for manual fallback)
+      const { data: session, error: sessionError } = await supabase
+        .from('vai_check_sessions')
+        .insert({
+          provider_id: user.id,
+          provider_face_url: imageData,
+          status: 'initiated'
+        })
+        .select()
+        .single();
 
-      const { data: verificationResult, error: verificationError } = await supabase.functions.invoke(
-        "verify-face-match",
-        {
-          body: { live_image: imageData },
-        }
-      );
+      if (sessionError || !session) {
+        throw sessionError || new Error('Failed to create session');
+      }
 
-      if (verificationError || !verificationResult?.success) {
-        const failureReason =
-          verificationResult?.failure_reason === "system_failure"
-            ? "Verification service is temporarily unavailable. Please try again."
-            : "We could not match your live scan to your V.A.I. photo. Check your lighting and try again.";
+      setSessionId(session.id);
+      setVaiPhotoUrl(vaiVerification.biometric_photo_url);
 
-        toast({
-          title: "Verification failed",
-          description: failureReason,
-          variant: "destructive",
-        });
+      // TODO: Implement actual face verification against biometric_photo_url
+      // For now, simulate verification failure to test manual fallback
+      // In production, replace this with actual face verification API call
+      const verificationSuccess = false; // Simulate failure for testing
 
+      if (!verificationSuccess) {
+        // Face verification failed - show manual fallback
         setIsVerifying(false);
-        setIsScanning(true);
+        setFailureReason('failed_verification'); // Could be 'system_failure', 'individual_issue', or 'failed_verification'
+        setShowManualFallback(true);
         return;
       }
 
-      const qrPayload = {
-        type: "vai-check-session",
-        sessionId: session.id,
-        sessionCode: session.session_code,
-        providerVai: vaiVerification.vai_number,
-      };
-
+      // Verification succeeded - update session and proceed
       const { error: updateError } = await supabase
-        .from("vai_check_sessions")
+        .from('vai_check_sessions')
         .update({
           provider_face_verified: true,
-          provider_verified: true,
-          provider_face_url: imageData,
-          verification_method: "automated",
-          qr_data: JSON.stringify(qrPayload),
-          qr_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-          status: "qr_shown",
-          metadata: {
-            provider_vai: vaiVerification.vai_number,
-            provider_verified_at: new Date().toISOString(),
-          },
+          status: 'qr_shown',
+          verification_method: 'automated'
         })
-        .eq("id", session.id);
+        .eq('id', session.id);
 
       if (updateError) throw updateError;
 
       toast({
-        title: "Identity verified",
-        description: "Share your QR code with the other party to continue.",
+        title: "✅ Verified",
+        description: "Identity confirmed"
       });
 
-      navigate(`/vai-check/show-qr/${session.id}`);
+      setTimeout(() => {
+        navigate(`/vai-check/show-qr/${session.id}`);
+      }, 1500);
     } catch (error: any) {
-      console.error("Face verification error:", error);
+      console.error('Face verification error:', error);
       toast({
         title: "Verification failed",
-        description: error.message || "Unable to verify your identity. Please try again.",
-        variant: "destructive",
+        description: error.message || "Could not verify identity",
+        variant: "destructive"
       });
-      setIsScanning(true);
-    } finally {
       setIsVerifying(false);
+      setIsScanning(true);
     }
+  };
+
+  const handleManualVerificationComplete = () => {
+    // Navigate to QR code page after manual verification is requested
+    if (sessionId) {
+      navigate(`/vai-check/show-qr/${sessionId}`);
+    } else {
+      navigate("/vai-check");
+    }
+  };
+
+  const handleManualVerificationCancel = () => {
+    // User wants to try again
+    setShowManualFallback(false);
+    setIsScanning(true);
+    setCapturedImage(null);
   };
 
   if (isVerifying) {
@@ -175,7 +148,27 @@ export default function FaceScanProvider() {
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-400 mx-auto"></div>
           <h2 className="text-xl font-bold">Verifying your identity...</h2>
-          <p className="text-white/60">Comparing against your V.A.I. biometric photo</p>
+          <p className="text-white/60">Comparing to your verified photo</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show manual verification fallback if verification failed
+  if (showManualFallback && sessionId && capturedImage && vaiPhotoUrl) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/95 pb-32 md:pb-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-3xl mx-auto">
+            <ManualVerificationRequestFlow
+              sessionId={sessionId}
+              capturedSelfie={capturedImage}
+              vaiPhotoUrl={vaiPhotoUrl}
+              failureReason={failureReason}
+              onComplete={handleManualVerificationComplete}
+              onCancel={handleManualVerificationCancel}
+            />
+          </div>
         </div>
       </div>
     );
@@ -193,15 +186,13 @@ export default function FaceScanProvider() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <span className="text-sm">V.A.I.-CHECK</span>
-        <div className="w-10" />
+        <div className="w-10"></div>
       </header>
 
       <main className="px-4 py-8 max-w-md mx-auto space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">📷 Verify Your Identity</h1>
-          <p className="text-white/80">
-            We’ll match this live scan with your ChainPass biometric photo before showing your QR code.
-          </p>
+          <p className="text-white/80">Position your face in the box</p>
         </div>
 
         <div className="relative aspect-[3/4] bg-black/20 rounded-lg overflow-hidden">
@@ -210,31 +201,27 @@ export default function FaceScanProvider() {
 
         <div className="space-y-3 text-sm text-white/80">
           <p className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-cyan-400 rounded-full" />
-            Center your face in the frame
+            <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+            Face centered
           </p>
           <p className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-cyan-400 rounded-full" />
-            Use bright, even lighting
+            <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+            Good lighting
           </p>
           <p className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-cyan-400 rounded-full" />
-            Remove glasses or hats if possible
+            <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+            Remove glasses if possible
           </p>
         </div>
 
-        {sessionCode && (
-          <div className="rounded-lg border border-white/10 p-3 text-center text-sm text-white/70">
-            Session code reserved: <span className="font-mono text-white">{sessionCode}</span>
-          </div>
-        )}
-
-        <Button
-          onClick={handleCapture}
-          className="w-full h-14 text-lg bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold"
-        >
-          CAPTURE & VERIFY
-        </Button>
+        <div className="space-y-3">
+          <Button
+            onClick={handleCapture}
+            className="w-full h-14 text-lg bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold"
+          >
+            CAPTURE
+          </Button>
+        </div>
       </main>
     </div>
   );

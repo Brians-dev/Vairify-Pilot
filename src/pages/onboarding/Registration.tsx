@@ -184,31 +184,6 @@ const Registration = () => {
     setIsLoading(true);
     
     try {
-      const hashedPassword = await bcrypt.hash(formData.password, 12);
-      const normalizedPhone = otpMethod === 'phone' ? normalizePhoneNumber(formData.phone) : null;
-
-      const otpPayload: Record<string, any> = {
-        email: formData.email,
-        method: otpMethod,
-        resend: false,
-      };
-
-      if (normalizedPhone) {
-        otpPayload.phone = normalizedPhone;
-      }
-
-      if (otpMethod === 'phone') {
-        const phoneError = validateField('phone', formData.phone);
-        if (phoneError) {
-          setErrors(prev => ({ ...prev, phone: phoneError }));
-          toast.error(phoneError);
-          return;
-        }
-        if (!normalizedPhone) {
-          toast.error("Please enter a valid phone number with country code");
-          return;
-        }
-      }
       // Import supabase client
       const { supabase } = await import("@/integrations/supabase/client");
       
@@ -217,7 +192,6 @@ const Registration = () => {
         .from('signup_sessions')
         .insert({
           email: formData.email,
-          phone: normalizedPhone,
           referral_vai: formData.referralVAI || null,
           coupon_code: formData.couponCode || null,
           has_existing_vai: formData.hasExistingVAI,
@@ -261,7 +235,7 @@ const Registration = () => {
           await supabase
             .from('signup_sessions')
             .update({ 
-              password_hash: hashedPassword
+              password_hash: formData.password // TODO: Hash password before storing
             })
             .eq('session_id', sessionId);
 
@@ -280,7 +254,7 @@ const Registration = () => {
             toast.success("VAI verified! Sending verification code...");
             
             const { data, error } = await supabase.functions.invoke('send-verification-otp', {
-              body: otpPayload
+              body: { email: formData.email, resend: false }
             });
 
             if (error) throw error;
@@ -311,13 +285,13 @@ const Registration = () => {
       await supabase
         .from('signup_sessions')
         .update({ 
-          password_hash: hashedPassword
+          password_hash: formData.password // TODO: Hash password before storing
         })
         .eq('session_id', sessionId);
 
       // Send verification OTP to email
       const { data, error } = await supabase.functions.invoke('send-verification-otp', {
-        body: otpPayload
+        body: { email: formData.email, resend: false }
       });
 
       if (error) throw error;
@@ -325,12 +299,6 @@ const Registration = () => {
       // Store form data temporarily for after verification
       sessionStorage.setItem('vairify_user', JSON.stringify(formData));
       sessionStorage.setItem('signup_session_id', sessionId);
-      sessionStorage.setItem('otp_method', otpMethod);
-      if (normalizedPhone) {
-        sessionStorage.setItem('otp_phone', normalizedPhone);
-      } else {
-        sessionStorage.removeItem('otp_phone');
-      }
       if (formData.couponCode) {
         sessionStorage.setItem('founding_coupon', formData.couponCode);
       }
@@ -470,60 +438,6 @@ const Registration = () => {
                 </p>
               )}
             </div>
-
-            {/* Verification Method */}
-            <div className="space-y-3">
-              <Label className="text-white text-base">Where should we send your verification code?</Label>
-              <RadioGroup
-                value={otpMethod}
-                onValueChange={(value) => setOtpMethod(value as 'email' | 'phone')}
-                className="space-y-2"
-              >
-                <div className="flex items-center space-x-3 p-3 border border-white/20 rounded-xl bg-white/5">
-                  <RadioGroupItem value="email" id="otp-email" />
-                  <label htmlFor="otp-email" className="flex-1 cursor-pointer">
-                    <span className="font-semibold text-white">Email</span>
-                    <p className="text-sm text-white/70">We’ll send the code to {formData.email || 'your email'}</p>
-                  </label>
-                </div>
-                <div className="flex items-center space-x-3 p-3 border border-white/20 rounded-xl bg-white/5">
-                  <RadioGroupItem value="phone" id="otp-phone" />
-                  <label htmlFor="otp-phone" className="flex-1 cursor-pointer">
-                    <span className="font-semibold text-white">Phone (SMS)</span>
-                    <p className="text-sm text-white/70">Faster delivery, requires a mobile number</p>
-                  </label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Phone (shown when SMS selected) */}
-            {otpMethod === 'phone' && (
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-white text-base">Mobile Number</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => {
-                    setFormData(prev => ({ ...prev, phone: e.target.value }));
-                    if (touched.phone) {
-                      const error = validateField('phone', e.target.value);
-                      setErrors(prev => ({ ...prev, phone: error }));
-                    }
-                  }}
-                  onBlur={() => handleBlur('phone')}
-                  className="h-12 bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:bg-white/25"
-                  placeholder="+1 555 123 4567"
-                />
-                {touched.phone && errors.phone && (
-                  <p className="text-red-300 text-sm flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.phone}
-                  </p>
-                )}
-              </div>
-            )}
 
             {/* Password */}
             <div className="space-y-3">

@@ -15,6 +15,7 @@ export default function ActivateDateGuard() {
   const [step, setStep] = useState<"groups" | "time" | "buffer" | "intel" | "confirm">("groups");
   const [location, setLocation] = useState<any>(null);
   const [photos, setPhotos] = useState<File[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
   const [hours, setHours] = useState(1);
@@ -83,6 +84,7 @@ export default function ActivateDateGuard() {
 
   const removePhoto = (index: number) => {
     setPhotos(photos.filter((_, i) => i !== index));
+    setPhotoUrls(photoUrls.filter((_, i) => i !== index));
   };
 
   const handleGroupToggle = (groupId: string) => {
@@ -123,7 +125,7 @@ export default function ActivateDateGuard() {
       const bufferEndAt = new Date(scheduledEndAt.getTime() + bufferMinutes * 60 * 1000);
 
       // Upload photos to Supabase Storage
-      const uploadedPhotoPaths: string[] = [];
+      const uploadedPhotoUrls: string[] = [];
       for (const photo of photos) {
         const filePath = `${user.id}/${Date.now()}_${photo.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -131,7 +133,12 @@ export default function ActivateDateGuard() {
           .upload(filePath, photo);
 
         if (!uploadError && uploadData) {
-          uploadedPhotoPaths.push(filePath);
+          const { data: urlData } = supabase.storage
+            .from('dateguard-pre-activation')
+            .getPublicUrl(filePath);
+          if (urlData?.publicUrl) {
+            uploadedPhotoUrls.push(urlData.publicUrl);
+          }
         }
       }
 
@@ -165,14 +172,14 @@ export default function ActivateDateGuard() {
           location_name: location?.address?.split(',')[0] || "Location",
           location_address: location?.address || "",
           location_gps: location?.gps || `${gpsCoords.lat.toFixed(4)}°N, ${Math.abs(gpsCoords.lng).toFixed(4)}°W`,
-          location_photo_url: uploadedPhotoPaths[0] || null,
+          location_photo_url: uploadedPhotoUrls[0] || null,
           location_notes: notes,
           memo: notes, // Keep for backward compatibility
           duration_minutes: Math.round(totalMinutes),
           scheduled_duration_minutes: Math.round(totalMinutes),
           buffer_minutes: bufferMinutes,
           selected_groups: Array.from(selectedGroups),
-          pre_activation_photos: uploadedPhotoPaths,
+          pre_activation_photos: uploadedPhotoUrls,
           pre_activation_notes: notes,
           gps_coordinates: gpsCoords,
           scheduled_end_at: scheduledEndAt.toISOString(),

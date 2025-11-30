@@ -144,44 +144,16 @@ export const ManualVerificationReviewFlow = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const updates: Record<string, unknown> = {
-        manual_review_decision: decision,
-        manual_review_decided_at: new Date().toISOString(),
-        manual_review_notes: notes || null,
-        status: decision === "approved" ? "qr_shown" : "manual_review_rejected",
-      };
-
-      if (decision === "approved") {
-        const { data: sessionData } = await supabase
-          .from("vai_check_sessions")
-          .select("provider_id, session_code")
-          .eq("id", sessionId)
-          .single();
-
-        if (sessionData) {
-          const { data: providerVai } = await supabase
-            .from("vai_verifications")
-            .select("vai_number")
-            .eq("user_id", sessionData.provider_id)
-            .single();
-
-          const qrPayload = {
-            type: "vai-check-session",
-            sessionId,
-            sessionCode: sessionData.session_code,
-            providerVai: providerVai?.vai_number || "VAI",
-          };
-
-          updates.provider_face_verified = true;
-          updates.verification_method = "manual_fallback";
-          updates.qr_data = JSON.stringify(qrPayload);
-        }
-      }
-
+      // Update session with review decision
       const { error: updateError } = await supabase
-        .from("vai_check_sessions")
-        .update(updates)
-        .eq("id", sessionId);
+        .from('vai_check_sessions')
+        .update({
+          manual_review_decision: decision,
+          manual_review_decided_at: new Date().toISOString(),
+          manual_review_notes: notes || null,
+          status: decision === 'approved' ? 'manual_review_approved' : 'manual_review_rejected'
+        })
+        .eq('id', sessionId);
 
       if (updateError) throw updateError;
 

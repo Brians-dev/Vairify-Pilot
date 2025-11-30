@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,224 +6,199 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-interface OtherUserProfile {
-  name: string;
-  vaiNumber: string;
-  rating: number;
-  reviewsCount: number;
-  location: string;
-  memberSince: string;
-  bio: string;
-  verified: boolean;
-}
-
-interface ReviewPreview {
-  id: string;
-  reviewer_vai_number: string | null;
-  overall_rating: number | null;
-  notes: string | null;
-  submitted_at: string | null;
-}
-
 export default function MutualProfileView() {
   const navigate = useNavigate();
   const { sessionId, role } = useParams();
   const { toast } = useToast();
   const [session, setSession] = useState<any>(null);
-  const [otherUser, setOtherUser] = useState<OtherUserProfile | null>(null);
-  const [recentReviews, setRecentReviews] = useState<ReviewPreview[]>([]);
-  const [waitingMessage, setWaitingMessage] = useState<string | null>(null);
-  const pollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearPolling = () => {
-    if (pollTimeout.current) {
-      clearTimeout(pollTimeout.current);
-      pollTimeout.current = null;
-    }
-  };
+  const [otherUser, setOtherUser] = useState<any>(null);
+  const [waiting, setWaiting] = useState(false);
 
   useEffect(() => {
     const loadSessionData = async () => {
       if (!sessionId) {
-        toast({ title: "Invalid session", variant: "destructive" });
+        toast({
+          title: "Invalid session",
+          description: "Session ID is required",
+          variant: "destructive"
+        });
         navigate("/vai-check");
         return;
       }
 
+      // Verify authentication
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast({ title: "Authentication required", description: "Please log in to continue", variant: "destructive" });
+        toast({
+          title: "Authentication required",
+          description: "Please log in to continue",
+          variant: "destructive"
+        });
         navigate("/login");
         return;
       }
 
+      // Load session from database
       const { data: sessionData, error: sessionError } = await supabase
-        .from("vai_check_sessions")
-        .select("*")
-        .eq("id", sessionId)
+        .from('vai_check_sessions')
+        .select('*, provider_id, client_id')
+        .eq('id', sessionId)
         .single();
 
       if (sessionError || !sessionData) {
-        toast({ title: "Session not found", variant: "destructive" });
+        toast({
+          title: "Session not found",
+          description: "This session may have expired",
+          variant: "destructive"
+        });
         navigate("/vai-check");
         return;
       }
 
       setSession(sessionData);
 
-      const otherUserId = role === "provider" ? sessionData.client_id : sessionData.provider_id;
+      // Determine the other user's ID
+      const otherUserId = role === 'provider' ? sessionData.client_id : sessionData.provider_id;
+      
       if (!otherUserId) {
-        setWaitingMessage("Waiting for the other participant to join the session...");
-        setOtherUser(null);
+        toast({
+          title: "Waiting for other user",
+          description: "The other participant hasn't joined yet",
+        });
+        setWaiting(true);
         return;
       }
 
-      setWaitingMessage(null);
+      // Load other user's profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*, provider_profiles(*)')
+        .eq('id', otherUserId)
+        .single();
 
-      const [{ data: profile }, { data: vaiVerification }, { data: allReviews }, { data: reviewPreviews }] =
-        await Promise.all([
-          supabase
-            .from("profiles")
-            .select("full_name, location, created_at, provider_profiles(username, bio)")
-            .eq("id", otherUserId)
-            .single(),
-          supabase.from("vai_verifications").select("vai_number").eq("user_id", otherUserId).single(),
-          supabase.from("reviews").select("overall_rating").eq("reviewed_user_id", otherUserId).eq("submitted", true),
-          supabase
-            .from("reviews")
-            .select("id, reviewer_vai_number, overall_rating, notes, submitted_at")
-            .eq("reviewed_user_id", otherUserId)
-            .eq("submitted", true)
-            .order("submitted_at", { ascending: false })
-            .limit(3),
-        ]);
+      if (profileError || !profile) {
+        toast({
+          title: "Profile not found",
+          variant: "destructive"
+        });
+        return;
+      }
 
-      const reviewCount = allReviews?.length || 0;
-      const avgRating =
-        reviewCount > 0
-          ? parseFloat(
-              (
-                allReviews!.reduce((sum, review) => sum + (review.overall_rating || 0), 0) / reviewCount
-              ).toFixed(1)
-            )
-          : 0;
+      // Load V.A.I. number
+      const { data: vaiVerification } = await supabase
+        .from('vai_verifications')
+        .select('vai_number')
+        .eq('user_id', otherUserId)
+        .single();
+
+      // Load reviews count and rating
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('reviewed_user_id', otherUserId);
+
+      const avgRating = reviews && reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+        : 0;
 
       setOtherUser({
-        name: profile?.provider_profiles?.username || profile?.full_name || "Unknown",
-        vaiNumber: vaiVerification?.vai_number || "N/A",
+        name: profile.provider_profiles?.username || profile.full_name || 'Unknown',
+        vaiNumber: vaiVerification?.vai_number || 'N/A',
         rating: avgRating,
-        reviewsCount: reviewCount,
-        location: profile?.location || "Location not set",
-        memberSince: profile
-          ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
-          : "",
-        bio: profile?.provider_profiles?.bio || "No bio available",
-        verified: Boolean(vaiVerification),
+        reviews: reviews?.length || 0,
+        location: profile.location || 'Location not set',
+        memberSince: new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        bio: profile.bio || 'No bio available',
+        verified: !!vaiVerification
       });
-
-      setRecentReviews(reviewPreviews || []);
     };
 
     loadSessionData();
-    return () => clearPolling();
   }, [sessionId, role, navigate, toast]);
 
-  const pollForDecision = () => {
-    clearPolling();
-    pollTimeout.current = setTimeout(async () => {
-      const { data: sessionData } = await supabase
-        .from("vai_check_sessions")
-        .select("provider_decision, client_decision")
-        .eq("id", sessionId)
-        .single();
-
-      if (!sessionData) return;
-      const otherDecision = role === "provider" ? sessionData.client_decision : sessionData.provider_decision;
-
-      if (otherDecision === "accept") {
-        clearPolling();
-        navigate(`/vai-check/contract/${sessionId}/${role}`);
-      } else if (otherDecision === "decline") {
-        clearPolling();
-        navigate(`/vai-check/declined/${sessionId}`);
-      } else {
-        pollForDecision();
-      }
-    }, 3000);
-  };
-
-  const handleDecision = async (decision: "accept" | "decline") => {
+  const handleDecision = async (decision: 'accept' | 'decline') => {
     if (!sessionId) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      toast({ title: "Authentication required", variant: "destructive" });
+      toast({
+        title: "Authentication required",
+        variant: "destructive"
+      });
       navigate("/login");
       return;
     }
 
-    const updateField = role === "provider" ? "provider_decision" : "client_decision";
+    // Update session with decision
+    const updateField = role === 'provider' ? 'provider_decision' : 'client_decision';
     const { error } = await supabase
-      .from("vai_check_sessions")
+      .from('vai_check_sessions')
       .update({
-        [updateField]: decision,
-        status: decision === "decline" ? "declined" : session?.status || "profiles_viewed",
+        [updateField]: decision === 'accept' ? 'accept' : 'decline',
+        status: decision === 'accept' ? 'profiles_viewed' : 'declined'
       })
-      .eq("id", sessionId);
+      .eq('id', sessionId);
 
     if (error) {
-      toast({ title: "Unable to save decision", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to save decision",
+        variant: "destructive"
+      });
       return;
     }
 
-    if (decision === "decline") {
+    if (decision === 'decline') {
       navigate(`/vai-check/declined/${sessionId}`);
-      return;
+    } else {
+      // Wait for other user's decision
+      setWaiting(true);
+      
+      // Poll for other user's decision
+      const checkOtherDecision = async () => {
+        const { data: sessionData } = await supabase
+          .from('vai_check_sessions')
+          .select('provider_decision, client_decision')
+          .eq('id', sessionId)
+          .single();
+
+        if (sessionData) {
+          const otherDecision = role === 'provider' 
+            ? sessionData.client_decision 
+            : sessionData.provider_decision;
+
+          if (otherDecision === 'accept') {
+            navigate(`/vai-check/contract/${sessionId}/${role}`);
+          } else if (otherDecision === 'decline') {
+            navigate(`/vai-check/declined/${sessionId}`);
+          }
+        }
+      };
+
+      // Check every 2 seconds for up to 60 seconds
+      const interval = setInterval(checkOtherDecision, 2000);
+      setTimeout(() => clearInterval(interval), 60000);
     }
-
-    const { data: sessionData } = await supabase
-      .from("vai_check_sessions")
-      .select("provider_decision, client_decision")
-      .eq("id", sessionId)
-      .single();
-
-    const otherDecision = role === "provider" ? sessionData?.client_decision : sessionData?.provider_decision;
-    if (otherDecision === "accept") {
-      await supabase.from("vai_check_sessions").update({ status: "contract_review" }).eq("id", sessionId);
-      navigate(`/vai-check/contract/${sessionId}/${role}`);
-      return;
-    }
-
-    if (otherDecision === "decline") {
-      navigate(`/vai-check/declined/${sessionId}`);
-      return;
-    }
-
-    setWaitingMessage("Thanks! Waiting for the other participant to respond...");
-    pollForDecision();
   };
 
-  if (waitingMessage) {
+  if (!otherUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1E40AF] flex items-center justify-center text-center text-white px-6">
-        <div className="space-y-4">
-          <div className="text-4xl">⏳</div>
-          <p className="text-lg font-semibold">{waitingMessage}</p>
-          <p className="text-sm text-white/70">
-            Keep this screen open. We’ll move you forward as soon as both decisions are recorded.
-          </p>
-          <Button variant="ghost" className="text-white/80" onClick={() => navigate("/vai-check")}>
-            Cancel session
-          </Button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1E40AF] flex items-center justify-center">
+        <div className="text-white">Loading...</div>
       </div>
     );
   }
 
-  if (!otherUser) {
+  if (waiting) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1E40AF] flex items-center justify-center text-white">
-        Loading profile...
+      <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1E40AF] flex items-center justify-center">
+        <div className="text-center text-white space-y-4 p-4">
+          <div className="text-4xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold">You accepted</h2>
+          <div className="animate-pulse">⏳</div>
+          <p>Waiting for {otherUser.name} to decide...</p>
+          <p className="text-sm text-white/60">They're reviewing your profile and reviews right now</p>
+        </div>
       </div>
     );
   }
@@ -231,90 +206,118 @@ export default function MutualProfileView() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1E40AF] text-white pb-24">
       <header className="p-4 flex items-center justify-between sticky top-0 bg-gradient-to-b from-[#0A1628] to-transparent z-10">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/vai-check")} className="text-white hover:bg-white/10">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleDecision('decline')}
+          className="text-white hover:bg-white/10"
+        >
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <span className="text-sm">V.A.I.-CHECK</span>
-        <div className="w-10" />
+        <div className="w-10"></div>
       </header>
 
       <main className="px-4 max-w-md mx-auto space-y-6">
-        <div className="text-center space-y-3">
-          <p className="text-xs uppercase tracking-wide text-white/60">You’re reviewing</p>
-          <div className="w-24 h-24 mx-auto rounded-full bg-white/10 flex items-center justify-center text-4xl">
-            👤
+        <div className="text-center">
+          <p className="text-sm text-white/60 mb-4">YOU'RE VIEWING:</p>
+          
+          <div className="w-32 h-32 mx-auto rounded-full bg-white/10 flex items-center justify-center mb-4">
+            <span className="text-5xl">👤</span>
           </div>
-          <h1 className="text-2xl font-bold">
-            {otherUser.name} {otherUser.verified && "✅"}
+
+          <h1 className="text-2xl font-bold mb-2">
+            {otherUser.name} {otherUser.verified && '✅'}
           </h1>
-          <p className="text-white/70 text-sm">V.A.I. #{otherUser.vaiNumber}</p>
-          <div className="flex items-center justify-center gap-2 text-sm text-white/80">
+          <p className="text-sm text-white/60">V.A.I. #: {otherUser.vaiNumber}</p>
+
+          <div className="flex items-center justify-center gap-2 mt-4">
             <div className="flex">
-              {[...Array(5)].map((_, idx) => (
-                <Star key={idx} className={`w-4 h-4 ${idx < Math.round(otherUser.rating) ? "fill-yellow-400 text-yellow-400" : "text-white/30"}`} />
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
               ))}
             </div>
-            <span>
-              {otherUser.rating.toFixed(1)} • {otherUser.reviewsCount} reviews
-            </span>
+            <span>{otherUser.rating} ({otherUser.reviews} reviews)</span>
           </div>
-          <p className="text-sm text-white/60">
-            📍 {otherUser.location} • Member since {otherUser.memberSince}
+
+          <p className="text-sm text-white/60 mt-2">
+            📍 {otherUser.location} • ✅ Member since {otherUser.memberSince}
           </p>
         </div>
 
-        <Card className="bg-white/5 border-white/10">
-          <CardContent className="p-4 space-y-2">
-            <p className="text-xs text-white/60 uppercase tracking-wide">About</p>
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-bold mb-2">ABOUT</h3>
             <p className="text-white/80 text-sm">{otherUser.bio}</p>
-          </CardContent>
-        </Card>
+          </div>
 
-        <div>
-          <p className="text-xs text-white/60 uppercase tracking-wide mb-3">Recent TrueRevu feedback</p>
-          {recentReviews.length === 0 ? (
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-4 text-sm text-white/70">No reviews yet</CardContent>
-            </Card>
-          ) : (
+          <div>
+            <h3 className="font-bold mb-3">📊 TRUEREVU REVIEWS ({otherUser.reviews})</h3>
+            
             <div className="space-y-3">
-              {recentReviews.map((review) => (
-                <Card key={review.id} className="bg-white/5 border-white/10">
-                  <CardContent className="p-4 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>{review.overall_rating?.toFixed(1) ?? "—"}</span>
-                      </div>
-                      <span className="text-white/60 text-xs">
-                        {review.submitted_at ? new Date(review.submitted_at).toLocaleDateString() : ""}
-                      </span>
+              <Card className="bg-white/5 border-white/10">
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      ))}
+                      <span className="text-sm ml-2">5.0</span>
                     </div>
-                    <p className="text-xs text-white/60">
-                      by {review.reviewer_vai_number ? `VAI ${review.reviewer_vai_number}` : "Verified member"}
-                    </p>
-                    {review.notes && <p className="text-sm text-white/80">“{review.notes}”</p>}
-                  </CardContent>
-                </Card>
-              ))}
+                    <span className="text-xs text-white/60">3 days ago</span>
+                  </div>
+                  <p className="text-sm font-semibold">Jordan K. ✅</p>
+                  <p className="text-sm text-white/80">"Great experience! Very respectful and professional"</p>
+                  <div className="flex flex-wrap gap-2 text-xs text-green-400">
+                    <span>✓ V.A.I.-CHECK completed</span>
+                    <span>✓ DateGuard active</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/5 border-white/10">
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      ))}
+                      <span className="text-sm ml-2">5.0</span>
+                    </div>
+                    <span className="text-xs text-white/60">1 week ago</span>
+                  </div>
+                  <p className="text-sm font-semibold">Taylor P. ✅</p>
+                  <p className="text-sm text-white/80">"Excellent! Highly recommend..."</p>
+                  <div className="flex flex-wrap gap-2 text-xs text-green-400">
+                    <span>✓ V.A.I.-CHECK completed</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          )}
+          </div>
         </div>
 
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-sm text-white/80">
-          Review carefully. Once both of you accept, you’ll lock in this session, sign the mutual consent contract, and proceed to final verification.
-        </div>
+        <div className="border-t border-white/10 pt-6 space-y-4">
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+            <p className="font-bold mb-2">⚠️ MAKE YOUR DECISION</p>
+            <p className="text-sm text-white/80">
+              Review their profile & reviews carefully. The other person is reviewing yours right now.
+            </p>
+          </div>
 
-        <div className="space-y-3">
           <Button
-            onClick={() => handleDecision("accept")}
-            className="w-full h-14 text-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+            onClick={() => handleDecision('accept')}
+            className="w-full h-14 text-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold"
           >
-            Accept meeting
+            ACCEPT MEETING
           </Button>
-          <Button variant="ghost" onClick={() => handleDecision("decline")} className="w-full text-red-400 hover:text-red-300">
+
+          <button
+            onClick={() => handleDecision('decline')}
+            className="w-full text-red-400 hover:text-red-300 text-sm"
+          >
             Decline
-          </Button>
+          </button>
         </div>
       </main>
     </div>

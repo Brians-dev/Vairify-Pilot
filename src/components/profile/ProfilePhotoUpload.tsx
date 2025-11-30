@@ -1,11 +1,14 @@
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import { Area } from "react-easy-crop";
-import { Upload, X, Camera } from "lucide-react";
+import { Upload, X, Camera, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AvatarLibrary } from "@/components/AvatarLibrary";
+import { cn } from "@/lib/utils";
 
 interface ProfilePhotoUploadProps {
   currentPhotoUrl?: string;
@@ -19,6 +22,7 @@ export const ProfilePhotoUpload = ({ currentPhotoUrl, onPhotoChange }: ProfilePh
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
+  const [photoMode, setPhotoMode] = useState<"upload" | "avatar">("upload");
 
   const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -156,7 +160,10 @@ export const ProfilePhotoUpload = ({ currentPhotoUrl, onPhotoChange }: ProfilePh
       <div className="flex flex-col items-center gap-4">
         {/* Photo Preview */}
         <div className="relative">
-          <div className="w-32 h-32 rounded-full bg-muted border-2 border-border overflow-hidden flex items-center justify-center">
+          <div className={cn(
+            "w-32 h-32 rounded-full border-2 overflow-hidden flex items-center justify-center bg-muted",
+            currentPhotoUrl ? "border-primary/40" : "border-border"
+          )}>
             {currentPhotoUrl ? (
               <img
                 src={currentPhotoUrl}
@@ -178,35 +185,60 @@ export const ProfilePhotoUpload = ({ currentPhotoUrl, onPhotoChange }: ProfilePh
             </button>
           )}
         </div>
-
-        {/* Upload Button */}
-        <div>
-          <input
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            onChange={handleFileSelect}
-            className="hidden"
-            id="profile-photo-input"
-          />
-          <label htmlFor="profile-photo-input">
-            <Button
-              type="button"
-              variant="outline"
-              className="cursor-pointer"
-              asChild
-            >
-              <span>
-                <Upload className="w-4 h-4 mr-2" />
-                {currentPhotoUrl ? "Change Photo" : "Upload Photo"}
-              </span>
-            </Button>
-          </label>
-        </div>
-
-        <p className="text-xs text-muted-foreground text-center max-w-xs">
-          Upload a clear photo of yourself. JPG, PNG, or WEBP. Max 5MB.
-        </p>
       </div>
+
+      <Tabs value={photoMode} onValueChange={(val) => setPhotoMode(val as "upload" | "avatar")}>
+        <TabsList className="grid grid-cols-2 w-full">
+          <TabsTrigger value="upload" className="flex items-center gap-2">
+            <Upload className="w-4 h-4" />
+            Upload Photo
+          </TabsTrigger>
+          <TabsTrigger value="avatar" className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            Choose Avatar
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upload" className="mt-4">
+          <div className="flex flex-col items-center gap-4">
+            <div>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="profile-photo-input"
+              />
+              <label htmlFor="profile-photo-input">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cursor-pointer"
+                  asChild
+                >
+                  <span>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {currentPhotoUrl ? "Change Photo" : "Upload Photo"}
+                  </span>
+                </Button>
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground text-center max-w-xs">
+              Upload a clear photo of yourself. JPG, PNG, or WEBP. Max 5MB.
+            </p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="avatar" className="mt-4">
+          <AvatarLibrary
+            selectedAvatar={currentPhotoUrl}
+            onSelect={(url) => {
+              onPhotoChange(url);
+              toast.success("Avatar selected!");
+            }}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Cropper Dialog */}
       <Dialog open={showCropper} onOpenChange={setShowCropper}>

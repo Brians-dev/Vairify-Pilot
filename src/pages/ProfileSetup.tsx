@@ -5,12 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+import { ProfilePhotoUpload } from "@/components/profile/ProfilePhotoUpload";
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
@@ -18,11 +16,11 @@ export default function ProfileSetup() {
 
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [providerProfileId, setProviderProfileId] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -50,14 +48,14 @@ export default function ProfileSetup() {
           setProviderProfileId(providerResponse.data.id);
           setUsername(providerResponse.data.username || "");
           if (providerResponse.data.avatar_url) {
-            setAvatarPreview(providerResponse.data.avatar_url);
+            setAvatarUrl(providerResponse.data.avatar_url);
           }
         }
 
         if (profileResponse.data) {
           setBio(profileResponse.data.bio || "");
           if (!providerResponse.data?.avatar_url && profileResponse.data.avatar_url) {
-            setAvatarPreview(profileResponse.data.avatar_url);
+            setAvatarUrl(profileResponse.data.avatar_url);
           }
         }
       } catch (error) {
@@ -70,73 +68,18 @@ export default function ProfileSetup() {
     loadProfile();
   }, [navigate]);
 
-  const getInitials = () => {
-    return username
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
-  };
-
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        title: "File too large",
-        description: "Please upload an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
-  };
-
-  const uploadAvatarIfNeeded = async (userId: string): Promise<string | null> => {
-    if (!avatarFile) {
-      return avatarPreview;
-    }
-
-    const fileExt = avatarFile.name.split(".").pop();
-    const fileName = `${userId}/${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("profile_avatars")
-      .upload(fileName, avatarFile, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: avatarFile.type,
-      });
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("profile_avatars")
-      .getPublicUrl(fileName);
-
-    if (!publicUrlData?.publicUrl) {
-      throw new Error("Unable to generate avatar URL");
-    }
-
-    setAvatarPreview(publicUrlData.publicUrl);
-    setAvatarFile(null);
-    return publicUrlData.publicUrl;
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!username.trim()) {
+      setUsernameError("Username is required");
       toast({
         title: "Username required",
         description: "Pick a unique username to continue.",
         variant: "destructive",
       });
       return;
+    } else {
+      setUsernameError(null);
     }
 
     setSaving(true);
@@ -161,8 +104,6 @@ export default function ProfileSetup() {
         setSaving(false);
         return;
       }
-
-      const avatarUrl = await uploadAvatarIfNeeded(user.id);
 
       if (providerProfileId) {
         const { error } = await supabase
@@ -231,44 +172,37 @@ export default function ProfileSetup() {
         </CardHeader>
         <CardContent>
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="flex items-center gap-6">
-              <Avatar className="w-20 h-20">
-                <AvatarImage src={avatarPreview ?? undefined} />
-                <AvatarFallback>{getInitials()}</AvatarFallback>
-              </Avatar>
-              <div>
-                <Label htmlFor="avatar-upload">Profile photo (optional)</Label>
-                <div className="flex items-center gap-3 mt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    onClick={() => document.getElementById("avatar-upload")?.click()}
-                  >
-                    <Upload className="w-4 h-4" />
-                    Upload Photo
-                  </Button>
-                  <Input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoChange}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">PNG, JPG or GIF up to 5MB.</p>
-              </div>
+            <div className="space-y-2">
+              <Label>Profile photo (optional)</Label>
+              <ProfilePhotoUpload
+                currentPhotoUrl={avatarUrl || undefined}
+                onPhotoChange={(url) => setAvatarUrl(url || null)}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="flex items-center gap-2 text-sm font-medium">
+                Username <span className="text-destructive">*</span>
+              </Label>
+              <p className="text-xs text-muted-foreground -mt-1">
+                What should the community call you?
+              </p>
               <Input
                 id="username"
-                placeholder="e.g. LunarAtlas"
+                placeholder="Choose a unique name..."
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (usernameError && e.target.value.trim().length > 0) {
+                    setUsernameError(null);
+                  }
+                }}
                 required
+                aria-invalid={!!usernameError}
               />
+              {usernameError && (
+                <p className="text-sm text-destructive">{usernameError}</p>
+              )}
             </div>
 
             <div className="space-y-2">

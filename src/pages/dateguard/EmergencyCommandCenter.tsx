@@ -11,32 +11,7 @@ export default function EmergencyCommandCenter() {
   const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const resolvePhotoUrls = async (photos?: string[] | null) => {
-    if (!photos || photos.length === 0) {
-      setPhotoUrls([]);
-      return;
-    }
-
-    const resolved = await Promise.all(
-      photos.map(async (photo) => {
-        if (!photo) return '';
-        if (photo.startsWith('http')) return photo;
-        const { data, error } = await supabase.storage
-          .from('dateguard-pre-activation')
-          .createSignedUrl(photo, 60 * 5);
-        if (error || !data?.signedUrl) {
-          console.warn('Unable to sign DateGuard photo', error);
-          return '';
-        }
-        return data.signedUrl;
-      })
-    );
-
-    setPhotoUrls(resolved.filter((url) => Boolean(url)));
-  };
 
   useEffect(() => {
     if (sessionId) {
@@ -59,7 +34,6 @@ export default function EmergencyCommandCenter() {
         .single();
 
       setSession(sessionData);
-      await resolvePhotoUrls(sessionData?.pre_activation_photos);
 
       // Fetch ECC messages
       const { data: messagesData } = await supabase
@@ -208,11 +182,11 @@ export default function EmergencyCommandCenter() {
                 <p className="text-white/90">{session.pre_activation_notes}</p>
               </div>
             )}
-            {photoUrls.length > 0 && (
+            {session.pre_activation_photos && session.pre_activation_photos.length > 0 && (
               <div>
                 <p className="font-semibold mb-2">Photos:</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {photoUrls.map((url: string, index: number) => (
+                  {session.pre_activation_photos.map((url: string, index: number) => (
                     <img
                       key={index}
                       src={url}
