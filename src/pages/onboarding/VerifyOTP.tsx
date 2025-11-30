@@ -108,8 +108,8 @@ const VerifyOTP = () => {
         navigate(`/onboarding/vai-callback?session_id=${sessionId}`);
       } else {
         // Normal new VAI creation flow
-        toast.success("Email verified! Redirecting...");
-        navigate(`/onboarding/success?session_id=${sessionId}`);
+        toast.success("Email verified! Welcome to Vairify.");
+        navigate("/welcome");
       }
     } catch (error: any) {
       console.error('OTP verification error:', error);

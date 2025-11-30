@@ -2,7 +2,6 @@ import { Header } from "@/components/feed/Header";
 import { BottomNavigation } from "@/components/feed/BottomNavigation";
 import { EmergencyButton } from "@/components/feed/EmergencyButton";
 import ReferralEarningsCard from "@/components/referral/ReferralEarningsCard";
-import { AvailableNowToggle } from "@/components/profile/AvailableNowToggle";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { 
   CheckCircle, 
@@ -21,6 +20,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useState, useEffect } from "react";
 import veniceBridge from "@/assets/venice-bridge.jpg";
 import vairifyLogo from "@/assets/vairify-logo.png";
+
+const PILOT_MODE = true;
 
 export default function Feed() {
   const [greeting, setGreeting] = useState<string>("");
@@ -100,237 +101,244 @@ export default function Feed() {
                 <span className="text-xs opacity-80">Verify ID</span>
               </Button>
 
-              <Button 
-                className="flex-col h-24 gap-1 justify-center bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-                onClick={() => window.location.href = "/available-now"}
-              >
-                <MapPin className="w-5 h-5" />
-                <span className="text-xs font-semibold">Available Now</span>
-                <span className="text-xs opacity-80">Go Live</span>
-              </Button>
+              {!PILOT_MODE && (
+                <Button 
+                  className="flex-col h-24 gap-1 justify-center bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                  onClick={() => window.location.href = "/available-now"}
+                >
+                  <MapPin className="w-5 h-5" />
+                  <span className="text-xs font-semibold">Available Now</span>
+                  <span className="text-xs opacity-80">Go Live</span>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Social Hub Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">💬 Social Hub</h2>
-          
-          {/* Summary Stats */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <Card className="p-3 text-center">
-              <p className="text-2xl font-bold text-foreground">12</p>
-              <p className="text-xs text-muted-foreground">Messages</p>
-            </Card>
-            <Card className="p-3 text-center">
-              <p className="text-2xl font-bold text-foreground">3</p>
-              <p className="text-xs text-muted-foreground">Notifications</p>
-            </Card>
-            <Card className="p-3 text-center">
-              <p className="text-2xl font-bold text-foreground">5</p>
-              <p className="text-xs text-muted-foreground">Requests</p>
-            </Card>
-          </div>
-
-          {/* Feed Preview Post */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Card className="cursor-pointer animate-fade-in border-border overflow-hidden hover:border-primary/50 transition-colors mb-4">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500"></div>
-                      <div>
-                        <p className="font-semibold text-foreground flex items-center gap-1">
-                          Jessica M.
-                          <CheckCircle className="w-4 h-4 text-success" />
-                        </p>
-                        <p className="text-xs text-muted-foreground">Venice, Italy • 2h ago</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">•••</Button>
-                  </div>
-                </CardHeader>
-                <div className="aspect-square relative overflow-hidden">
-                  <img src={veniceBridge} alt="Venice Bridge" className="w-full h-full object-cover" />
-                </div>
-                <CardContent className="pt-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <button className="flex items-center gap-1 hover-scale">
-                        <Star className="w-5 h-5 text-foreground" />
-                      </button>
-                      <button className="flex items-center gap-1 hover-scale">
-                        <Eye className="w-5 h-5 text-foreground" />
-                      </button>
-                      <button className="flex items-center gap-1 hover-scale">
-                        <TrendingUp className="w-5 h-5 text-foreground" />
-                      </button>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">Available Now</Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">342 likes</p>
-                    <p className="text-sm text-foreground mt-1">
-                      <span className="font-semibold">Jessica M.</span> Venice is nice this time of year 🌉✨
-                    </p>
-                    <button className="text-xs text-muted-foreground mt-1">View all 28 comments</button>
-                    <p className="text-xs text-muted-foreground mt-1">2 HOURS AGO</p>
-                  </div>
-                </CardContent>
-                <p className="text-xs text-center text-muted-foreground p-3 border-t">Tap to see more posts</p>
-              </Card>
-            </SheetTrigger>
-
-            <SheetContent side="bottom" className="h-[95vh] p-0">
-              <SheetHeader className="p-4 border-b sticky top-0 bg-background z-10">
-                <SheetTitle>Social Feed</SheetTitle>
-              </SheetHeader>
-              <div className="overflow-y-auto h-full pb-20 px-4 pt-4 space-y-4">
-                {/* Venice Post in Feed */}
-                <Card className="animate-fade-in border-border overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500"></div>
-                        <div>
-                          <p className="font-semibold text-foreground flex items-center gap-1">
-                            Jessica M.
-                            <CheckCircle className="w-4 h-4 text-success" />
-                          </p>
-                          <p className="text-xs text-muted-foreground">Venice, Italy • 2h ago</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">•••</Button>
-                    </div>
-                  </CardHeader>
-                  <div className="aspect-square relative overflow-hidden">
-                    <img src={veniceBridge} alt="Venice Bridge" className="w-full h-full object-cover" />
-                  </div>
-                  <CardContent className="pt-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 hover-scale">
-                          <Star className="w-5 h-5 text-foreground" />
-                        </button>
-                        <button className="flex items-center gap-1 hover-scale">
-                          <Eye className="w-5 h-5 text-foreground" />
-                        </button>
-                        <button className="flex items-center gap-1 hover-scale">
-                          <TrendingUp className="w-5 h-5 text-foreground" />
-                        </button>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">Available Now</Badge>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">342 likes</p>
-                      <p className="text-sm text-foreground mt-1">
-                        <span className="font-semibold">Jessica M.</span> Venice is nice this time of year 🌉✨
-                      </p>
-                      <button className="text-xs text-muted-foreground mt-1">View all 28 comments</button>
-                      <p className="text-xs text-muted-foreground mt-1">2 HOURS AGO</p>
-                    </div>
-                  </CardContent>
+        {!PILOT_MODE && (
+          <>
+            {/* Social Hub Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-3">💬 Social Hub</h2>
+              
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <Card className="p-3 text-center">
+                  <p className="text-2xl font-bold text-foreground">12</p>
+                  <p className="text-xs text-muted-foreground">Messages</p>
                 </Card>
-
-                {/* Additional feed posts */}
-                <Card className="animate-fade-in border-border overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500"></div>
-                        <div>
-                          <p className="font-semibold text-foreground flex items-center gap-1">
-                            Sarah K.
-                            <CheckCircle className="w-4 h-4 text-success" />
-                          </p>
-                          <p className="text-xs text-muted-foreground">Miami, FL • 5h ago</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">•••</Button>
-                    </div>
-                  </CardHeader>
-                  <div className="aspect-square bg-gradient-to-br from-blue-400 to-cyan-400 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Camera className="w-16 h-16 text-white/30" />
-                    </div>
-                  </div>
-                  <CardContent className="pt-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 hover-scale">
-                          <Star className="w-5 h-5 text-foreground" />
-                        </button>
-                        <button className="flex items-center gap-1 hover-scale">
-                          <Eye className="w-5 h-5 text-foreground" />
-                        </button>
-                        <button className="flex items-center gap-1 hover-scale">
-                          <TrendingUp className="w-5 h-5 text-foreground" />
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">234 likes</p>
-                      <p className="text-sm text-foreground mt-1">
-                        <span className="font-semibold">Sarah K.</span> Beach vibes 🌊 Perfect day in Miami!
-                      </p>
-                      <button className="text-xs text-muted-foreground mt-1">View all 45 comments</button>
-                      <p className="text-xs text-muted-foreground mt-1">5 HOURS AGO</p>
-                    </div>
-                  </CardContent>
+                <Card className="p-3 text-center">
+                  <p className="text-2xl font-bold text-foreground">3</p>
+                  <p className="text-xs text-muted-foreground">Notifications</p>
                 </Card>
-
-                <Card className="animate-fade-in border-border overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500"></div>
-                        <div>
-                          <p className="font-semibold text-foreground flex items-center gap-1">
-                            Emma R.
-                            <CheckCircle className="w-4 h-4 text-success" />
-                          </p>
-                          <p className="text-xs text-muted-foreground">Los Angeles, CA • 1d ago</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">•••</Button>
-                    </div>
-                  </CardHeader>
-                  <div className="aspect-square bg-gradient-to-br from-green-400 to-emerald-400 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Camera className="w-16 h-16 text-white/30" />
-                    </div>
-                  </div>
-                  <CardContent className="pt-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 hover-scale">
-                          <Star className="w-5 h-5 text-foreground" />
-                        </button>
-                        <button className="flex items-center gap-1 hover-scale">
-                          <Eye className="w-5 h-5 text-foreground" />
-                        </button>
-                        <button className="flex items-center gap-1 hover-scale">
-                          <TrendingUp className="w-5 h-5 text-foreground" />
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">189 likes</p>
-                      <p className="text-sm text-foreground mt-1">
-                        <span className="font-semibold">Emma R.</span> Just completed my 50th verified encounter! #VAIrify
-                      </p>
-                      <button className="text-xs text-muted-foreground mt-1">View all 31 comments</button>
-                      <p className="text-xs text-muted-foreground mt-1">1 DAY AGO</p>
-                    </div>
-                  </CardContent>
+                <Card className="p-3 text-center">
+                  <p className="text-2xl font-bold text-foreground">5</p>
+                  <p className="text-xs text-muted-foreground">Requests</p>
                 </Card>
               </div>
-            </SheetContent>
-          </Sheet>
 
-          {/* VAIrify Official Post */}
-          <Card className="animate-fade-in border-accent/30 overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5">
+              {/* Feed Preview Post */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Card className="cursor-pointer animate-fade-in border-border overflow-hidden hover:border-primary/50 transition-colors mb-4">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500"></div>
+                          <div>
+                            <p className="font-semibold text-foreground flex items-center gap-1">
+                              Jessica M.
+                              <CheckCircle className="w-4 h-4 text-success" />
+                            </p>
+                            <p className="text-xs text-muted-foreground">Venice, Italy • 2h ago</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">•••</Button>
+                      </div>
+                    </CardHeader>
+                    <div className="aspect-square relative overflow-hidden">
+                      <img src={veniceBridge} alt="Venice Bridge" className="w-full h-full object-cover" />
+                    </div>
+                    <CardContent className="pt-3 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <button className="flex items-center gap-1 hover-scale">
+                            <Star className="w-5 h-5 text-foreground" />
+                          </button>
+                          <button className="flex items-center gap-1 hover-scale">
+                            <Eye className="w-5 h-5 text-foreground" />
+                          </button>
+                          <button className="flex items-center gap-1 hover-scale">
+                            <TrendingUp className="w-5 h-5 text-foreground" />
+                          </button>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">Available Now</Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">342 likes</p>
+                        <p className="text-sm text-foreground mt-1">
+                          <span className="font-semibold">Jessica M.</span> Venice is nice this time of year 🌉✨
+                        </p>
+                        <button className="text-xs text-muted-foreground mt-1">View all 28 comments</button>
+                        <p className="text-xs text-muted-foreground mt-1">2 HOURS AGO</p>
+                      </div>
+                    </CardContent>
+                    <p className="text-xs text-center text-muted-foreground p-3 border-t">Tap to see more posts</p>
+                  </Card>
+                </SheetTrigger>
+
+                <SheetContent side="bottom" className="h-[95vh] p-0">
+                  <SheetHeader className="p-4 border-b sticky top-0 bg-background z-10">
+                    <SheetTitle>Social Feed</SheetTitle>
+                  </SheetHeader>
+                  <div className="overflow-y-auto h-full pb-20 px-4 pt-4 space-y-4">
+                    {/* Venice Post in Feed */}
+                    <Card className="animate-fade-in border-border overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500"></div>
+                            <div>
+                              <p className="font-semibold text-foreground flex items-center gap-1">
+                                Jessica M.
+                                <CheckCircle className="w-4 h-4 text-success" />
+                              </p>
+                              <p className="text-xs text-muted-foreground">Venice, Italy • 2h ago</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">•••</Button>
+                        </div>
+                      </CardHeader>
+                      <div className="aspect-square relative overflow-hidden">
+                        <img src={veniceBridge} alt="Venice Bridge" className="w-full h-full object-cover" />
+                      </div>
+                      <CardContent className="pt-3 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-1 hover-scale">
+                              <Star className="w-5 h-5 text-foreground" />
+                            </button>
+                            <button className="flex items-center gap-1 hover-scale">
+                              <Eye className="w-5 h-5 text-foreground" />
+                            </button>
+                            <button className="flex items-center gap-1 hover-scale">
+                              <TrendingUp className="w-5 h-5 text-foreground" />
+                            </button>
+                          </div>
+                          <Badge variant="secondary" className="text-xs">Available Now</Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">342 likes</p>
+                          <p className="text-sm text-foreground mt-1">
+                            <span className="font-semibold">Jessica M.</span> Venice is nice this time of year 🌉✨
+                          </p>
+                          <button className="text-xs text-muted-foreground mt-1">View all 28 comments</button>
+                          <p className="text-xs text-muted-foreground mt-1">2 HOURS AGO</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Additional feed posts */}
+                    <Card className="animate-fade-in border-border overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500"></div>
+                            <div>
+                              <p className="font-semibold text-foreground flex items-center gap-1">
+                                Sarah K.
+                                <CheckCircle className="w-4 h-4 text-success" />
+                              </p>
+                              <p className="text-xs text-muted-foreground">Miami, FL • 5h ago</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">•••</Button>
+                        </div>
+                      </CardHeader>
+                      <div className="aspect-square bg-gradient-to-br from-blue-400 to-cyan-400 relative">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Camera className="w-16 h-16 text-white/30" />
+                        </div>
+                      </div>
+                      <CardContent className="pt-3 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-1 hover-scale">
+                              <Star className="w-5 h-5 text-foreground" />
+                            </button>
+                            <button className="flex items-center gap-1 hover-scale">
+                              <Eye className="w-5 h-5 text-foreground" />
+                            </button>
+                            <button className="flex items-center gap-1 hover-scale">
+                              <TrendingUp className="w-5 h-5 text-foreground" />
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">234 likes</p>
+                          <p className="text-sm text-foreground mt-1">
+                            <span className="font-semibold">Sarah K.</span> Beach vibes 🌊 Perfect day in Miami!
+                          </p>
+                          <button className="text-xs text-muted-foreground mt-1">View all 45 comments</button>
+                          <p className="text-xs text-muted-foreground mt-1">5 HOURS AGO</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="animate-fade-in border-border overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500"></div>
+                            <div>
+                              <p className="font-semibold text-foreground flex items-center gap-1">
+                                Emma R.
+                                <CheckCircle className="w-4 h-4 text-success" />
+                              </p>
+                              <p className="text-xs text-muted-foreground">Los Angeles, CA • 1d ago</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">•••</Button>
+                        </div>
+                      </CardHeader>
+                      <div className="aspect-square bg-gradient-to-br from-green-400 to-emerald-400 relative">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Camera className="w-16 h-16 text-white/30" />
+                        </div>
+                      </div>
+                      <CardContent className="pt-3 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-1 hover-scale">
+                              <Star className="w-5 h-5 text-foreground" />
+                            </button>
+                            <button className="flex items-center gap-1 hover-scale">
+                              <Eye className="w-5 h-5 text-foreground" />
+                            </button>
+                            <button className="flex items-center gap-1 hover-scale">
+                              <TrendingUp className="w-5 h-5 text-foreground" />
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">189 likes</p>
+                          <p className="text-sm text-foreground mt-1">
+                            <span className="font-semibold">Emma R.</span> Just completed my 50th verified encounter! #VAIrify
+                          </p>
+                          <button className="text-xs text-muted-foreground mt-1">View all 31 comments</button>
+                          <p className="text-xs text-muted-foreground mt-1">1 DAY AGO</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </>
+        )}
+
+        {/* VAIrify Official Post */}
+        <Card className="animate-fade-in border-accent/30 overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

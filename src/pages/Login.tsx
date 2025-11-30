@@ -62,7 +62,7 @@ const Login = () => {
       .single();
 
     if (profile?.username) {
-      navigate('/dashboard');
+      navigate('/feed');
     } else {
       navigate('/welcome');
     }
@@ -102,7 +102,7 @@ const Login = () => {
           .single();
 
         if (profile?.username) {
-          navigate('/dashboard');
+          navigate('/feed');
         } else {
           navigate('/welcome');
         }

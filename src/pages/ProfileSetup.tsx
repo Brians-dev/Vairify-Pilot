@@ -142,7 +142,7 @@ export default function ProfileSetup() {
         title: "Profile ready",
         description: "Welcome to the community!",
       });
-      navigate("/dashboard");
+      navigate("/feed");
     } catch (error: any) {
       console.error("Profile setup error:", error);
       toast({

@@ -7,11 +7,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
-import Dashboard from "./pages/Dashboard";
-import CommunityWelcome from "./pages/CommunityWelcome";
 import ProfileSetup from "./pages/ProfileSetup";
 import CreateVAI from "./components/vai/CreateVAI";
-import Welcome from "./pages/onboarding/Welcome";
+import OnboardingWelcome from "./pages/onboarding/Welcome";
 import LanguageSelection from "./pages/onboarding/LanguageSelection";
 import RoleSelection from "./pages/onboarding/RoleSelection";
 import Registration from "./pages/onboarding/Registration";
@@ -69,6 +67,10 @@ import Search from "./pages/Search";
 import Favorites from "./pages/Favorites";
 import ActivityTimeline from "./pages/ActivityTimeline";
 import Pricing from "./pages/Pricing";
+import Welcome from "./pages/Welcome";
+import Premium from "./pages/Premium";
+import TierBenefits from "./pages/TierBenefits";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProfileCreation from "./pages/ProfileCreation";
 import ProfileWizard from "./pages/ProfileWizard";
 import ApplyInfluencer from "./pages/ApplyInfluencer";
@@ -102,10 +104,13 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/create-vai" element={<CreateVAI />} />
             <Route path="/feed" element={<Feed />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/welcome" element={<CommunityWelcome />} />
+            <Route path="/dashboard" element={<Navigate to="/feed" replace />} />
+            <Route path="/welcome" element={<Welcome />} />
+            <Route path="/premium" element={<Premium />} />
+            <Route path="/tier-benefits" element={<TierBenefits />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
-          <Route path="/onboarding/welcome" element={<Welcome />} />
+          <Route path="/onboarding/welcome" element={<OnboardingWelcome />} />
           <Route path="/onboarding/language" element={<LanguageSelection />} />
           <Route path="/onboarding/role" element={<RoleSelection />} />
           <Route path="/onboarding/registration" element={<Registration />} />
