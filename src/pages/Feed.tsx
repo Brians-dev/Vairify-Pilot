@@ -388,7 +388,6 @@ export default function Feed() {
               </div>
             </CardContent>
           </Card>
-        </div>
 
         {/* Community Bulletin Board */}
         <div>
@@ -439,6 +438,7 @@ export default function Feed() {
             </div>
           </CardContent>
         </Card>
+
       </main>
 
       <EmergencyButton />
